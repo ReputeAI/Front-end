@@ -1,7 +1,7 @@
 <template>
   <div class="flex">
     <Sidebar />
-    <div class="flex-1 p-6">
+    <div class="flex-1 p-6 max-w-6xl mx-auto">
       <h1 class="text-2xl font-bold mb-4">Reviews</h1>
       <table class="min-w-full bg-white dark:bg-gray-800 rounded shadow">
         <thead>

@@ -1,7 +1,13 @@
 <template>
   <div class="bg-white dark:bg-gray-800 w-64 min-h-screen shadow-md hidden md:block">
-    <nav class="mt-5">
-      <router-link v-for="item in items" :key="item.to" :to="item.to" class="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+    <nav class="mt-8 space-y-1">
+      <router-link
+        v-for="item in items"
+        :key="item.to"
+        :to="item.to"
+        class="block px-6 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-r-full"
+        active-class="bg-gray-100 dark:bg-gray-700 font-semibold text-primary"
+      >
         {{ item.label }}
       </router-link>
     </nav>
