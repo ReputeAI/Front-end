@@ -1,7 +1,7 @@
 <template>
   <div class="flex">
     <Sidebar />
-    <div class="flex-1 p-6">
+    <div class="flex-1 p-6 max-w-6xl mx-auto">
       <h1 class="text-2xl font-bold mb-4">Dashboard</h1>
       <div class="grid md:grid-cols-2 gap-6 mb-6">
         <div class="p-4 bg-white dark:bg-gray-800 rounded shadow">

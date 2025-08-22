@@ -1,7 +1,7 @@
 <template>
   <div class="flex">
     <Sidebar />
-    <div class="flex-1 p-6 space-y-6">
+    <div class="flex-1 p-6 max-w-6xl mx-auto space-y-6">
       <h1 class="text-2xl font-bold">Settings</h1>
       <div class="bg-white dark:bg-gray-800 p-4 rounded shadow space-y-4">
         <h2 class="font-semibold">Integrations</h2>
