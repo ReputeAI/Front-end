@@ -3,81 +3,211 @@
     <Sidebar />
     <div class="flex-1 p-6 max-w-6xl mx-auto">
       <h1 class="text-2xl font-bold mb-4">Reviews</h1>
-      <table class="min-w-full bg-white dark:bg-gray-800 rounded shadow">
-        <thead>
-          <tr class="text-left">
-            <th class="p-2">Platform</th>
-            <th class="p-2">Reviewer</th>
-            <th class="p-2">Rating</th>
-            <th class="p-2">Review</th>
-            <th class="p-2">Sentiment</th>
-            <th class="p-2"></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="r in reviews" :key="r.id" class="border-t">
-            <td class="p-2">{{ r.platform }}</td>
-            <td class="p-2">{{ r.reviewer }}</td>
-            <td class="p-2">{{ '★'.repeat(r.rating) }}</td>
-            <td class="p-2">{{ r.text }}</td>
-            <td class="p-2"><span :class="badgeClass(r.sentiment)">{{ r.sentiment }}</span></td>
-            <td class="p-2"><button class="text-primary" @click="openModal(r)">Respond</button></td>
-          </tr>
-        </tbody>
-      </table>
 
-      <Dialog v-if="selected" @close="selected=null">
-        <div class="fixed inset-0 bg-black/30" aria-hidden="true" />
-        <div class="fixed inset-0 flex items-center justify-center p-4">
-          <DialogPanel class="w-full max-w-md rounded bg-white p-6">
-            <DialogTitle class="text-lg font-medium">AI Suggestion</DialogTitle>
-            <p class="mt-2 text-gray-700">{{ aiResponse }}</p>
-            <div class="mt-4 flex justify-end space-x-2">
-              <button class="px-4 py-2 bg-gray-200 rounded" @click="regenerate">Regenerate</button>
-              <button class="px-4 py-2 bg-primary text-white rounded" @click="selected=null">Close</button>
-            </div>
-          </DialogPanel>
+      <div class="mb-4 space-y-2">
+        <div class="flex flex-wrap gap-2 items-center">
+          <select v-model="filters.platform" class="border p-1 rounded">
+            <option value="">Platform</option>
+            <option v-for="p in platformOptions" :key="p" :value="p">{{ p }}</option>
+          </select>
+
+          <select v-model="filters.sentiment" class="border p-1 rounded">
+            <option value="">Sentiment</option>
+            <option value="positive">Positive</option>
+            <option value="neutral">Neutral</option>
+            <option value="negative">Negative</option>
+          </select>
+
+          <div class="flex items-center">
+            <label class="mr-2">Min rating: {{ filters.rating_min }}</label>
+            <input
+              type="range"
+              min="0"
+              max="5"
+              v-model.number="filters.rating_min"
+              class="w-32"
+            />
+          </div>
+
+          <input
+            v-model="filters.q"
+            type="search"
+            placeholder="Search"
+            class="border p-1 rounded flex-1 min-w-[120px]"
+          />
+
+          <input v-model="filters.date_from" type="date" class="border p-1 rounded" />
+
+          <button
+            @click="refresh"
+            class="ml-auto bg-primary text-white px-3 py-1 rounded"
+          >
+            Refresh reviews
+          </button>
         </div>
-      </Dialog>
+      </div>
+
+      <div v-if="loading">Loading...</div>
+      <div v-else-if="error" class="text-red-600">{{ error.message || error }}</div>
+      <div v-else>
+        <table class="min-w-full bg-white dark:bg-gray-800 rounded shadow">
+          <thead>
+            <tr class="text-left">
+              <th class="p-2">Platform</th>
+              <th class="p-2">Rating</th>
+              <th class="p-2">Text</th>
+              <th class="p-2">Date</th>
+              <th class="p-2">Sentiment</th>
+              <th class="p-2">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="r in items" :key="r.id" class="border-t">
+              <td class="p-2">{{ r.platform }}</td>
+              <td class="p-2">{{ '★'.repeat(r.rating) }}</td>
+              <td class="p-2">
+                <div class="truncate max-w-xs" :title="r.text">{{ r.text }}</div>
+              </td>
+              <td class="p-2">{{ new Date(r.date).toLocaleDateString() }}</td>
+              <td class="p-2">
+                <span
+                  class="px-2 py-1 rounded text-sm"
+                  :class="sentimentClass(r.sentiment)"
+                >
+                  {{ r.sentiment }}
+                </span>
+              </td>
+              <td class="p-2">
+                <button class="text-primary">View</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="flex items-center justify-between mt-4">
+          <div class="space-x-2">
+            <button
+              @click="pagination.page--"
+              :disabled="pagination.page === 1"
+              class="px-3 py-1 border rounded disabled:opacity-50"
+            >
+              Prev
+            </button>
+            <span>Page {{ pagination.page }}</span>
+            <button
+              @click="pagination.page++"
+              :disabled="items.length < pagination.size"
+              class="px-3 py-1 border rounded disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
+          <div class="flex items-center">
+            <label class="mr-2">Rows:</label>
+            <select v-model.number="pagination.size" class="border p-1 rounded">
+              <option :value="25">25</option>
+              <option :value="50">50</option>
+              <option :value="100">100</option>
+            </select>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
 import Sidebar from '../components/Sidebar.vue';
-import { useReviewsStore } from '../stores/reviews';
-import { Dialog, DialogPanel, DialogTitle } from '@headlessui/vue';
-import { ref } from 'vue';
+import { ref, reactive, onMounted, watch, computed } from 'vue';
+import { api } from '../lib/api';
+import { useAuthStore } from '../stores/auth';
 
-const reviewStore = useReviewsStore();
-const reviews = reviewStore.reviews;
+const auth = useAuthStore();
 
-function badgeClass(sentiment) {
-  return {
-    'Positive': 'text-green-600',
-    'Neutral': 'text-yellow-600',
-    'Negative': 'text-red-600'
-  }[sentiment];
-}
+const filters = reactive({
+  platform: '',
+  sentiment: '',
+  rating_min: 0,
+  q: '',
+  date_from: ''
+});
 
-const selected = ref(null);
-const aiResponse = ref('Thank you for your feedback!');
+const loading = ref(false);
+const error = ref(null);
+const items = ref([]);
 
-function openModal(review) {
-  selected.value = review;
-  aiResponse.value = generateResponse(review);
-}
+const pagination = reactive({
+  page: 1,
+  size: 50,
+  total: 0
+});
 
-function generateResponse(review) {
-  if (review.sentiment === 'Positive') {
-    return 'Thanks for the great review!';
-  } else if (review.sentiment === 'Negative') {
-    return 'We are sorry to hear that. We will improve.';
+const platformOptions = computed(() => {
+  const set = new Set(items.value.map(r => r.platform));
+  return Array.from(set);
+});
+
+async function fetchReviews() {
+  if (!auth.orgId) return;
+  loading.value = true;
+  error.value = null;
+  try {
+    const params = {
+      ...filters,
+      page: pagination.page,
+      size: pagination.size
+    };
+    if (!filters.rating_min) delete params.rating_min;
+    Object.keys(params).forEach((k) => params[k] === '' && delete params[k]);
+
+    const { data } = await api.get(`/orgs/${auth.orgId}/reviews`, { params });
+    items.value = data.items || data;
+    if (data.total !== undefined) pagination.total = data.total;
+  } catch (e) {
+    error.value = e;
+  } finally {
+    loading.value = false;
   }
-  return 'Thank you for your review.';
 }
 
-function regenerate() {
-  aiResponse.value = generateResponse(selected.value);
+onMounted(fetchReviews);
+
+watch(
+  filters,
+  () => {
+    pagination.page = 1;
+    fetchReviews();
+  },
+  { deep: true }
+);
+
+watch(
+  () => [pagination.page, pagination.size],
+  () => {
+    fetchReviews();
+  }
+);
+
+function sentimentClass(s) {
+  switch (s) {
+    case 'positive':
+      return 'bg-green-100 text-green-800';
+    case 'negative':
+      return 'bg-red-100 text-red-800';
+    default:
+      return 'bg-gray-100 text-gray-800';
+  }
+}
+
+async function refresh() {
+  if (!auth.orgId) return;
+  try {
+    await api.post(`/orgs/${auth.orgId}/reviews/refresh`);
+    alert('Refresh gestart');
+    fetchReviews();
+  } catch (e) {
+    console.error(e);
+  }
 }
 </script>
+
