@@ -28,6 +28,7 @@ const items = [
   { to: '/replies', label: 'Replies' },
   { to: '/integrations', label: 'Integrations' },
   { to: '/settings', label: 'Settings' },
-  { to: '/billing', label: 'Billing' }
-];
+  { to: '/billing', label: 'Billing' },
+  { to: '/usage', label: 'Usage' }
+  ];
 </script>
