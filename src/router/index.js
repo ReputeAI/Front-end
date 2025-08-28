@@ -6,6 +6,8 @@ import Settings from '../pages/Settings.vue';
 import Billing from '../pages/Billing.vue';
 import Login from '../pages/Login.vue';
 import Signup from '../pages/Signup.vue';
+import Integrations from '../pages/Integrations.vue';
+import IntegrationCallback from '../pages/IntegrationCallback.vue';
 
 const routes = [
   { path: '/', component: LandingPage },
@@ -13,6 +15,8 @@ const routes = [
   { path: '/signup', component: Signup },
   { path: '/dashboard', component: Dashboard },
   { path: '/reviews', component: Reviews },
+  { path: '/integrations', component: Integrations },
+  { path: '/integrations/callback', component: IntegrationCallback },
   { path: '/settings', component: Settings },
   { path: '/billing', component: Billing }
 ];
