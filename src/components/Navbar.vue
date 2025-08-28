@@ -14,15 +14,17 @@
                 :memberships="auth.me.memberships"
               />
             </template>
-            <template v-else>
-              <router-link to="/login" class="text-gray-700 hover:text-primary dark:text-gray-300">Login</router-link>
-              <router-link to="/signup" class="px-4 py-2 bg-primary text-white rounded-md shadow hover:bg-primary/90">Start Free Trial</router-link>
-            </template>
-          </div>
-          <button @click="toggleDark" class="p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700">
-            <MoonIcon v-if="!isDark" class="h-5 w-5" />
-            <SunIcon v-else class="h-5 w-5" />
-          </button>
+              <template v-else>
+                <router-link to="/login" class="text-gray-700 hover:text-primary dark:text-gray-300">Login</router-link>
+                <router-link to="/signup">
+                  <BaseButton>Start Free Trial</BaseButton>
+                </router-link>
+              </template>
+            </div>
+            <button @click="toggleDark" class="p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700">
+              <MoonIcon v-if="!isDark" class="h-5 w-5" />
+              <SunIcon v-else class="h-5 w-5" />
+            </button>
         </div>
       </div>
     </div>
@@ -31,22 +33,25 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { MoonIcon, SunIcon } from '@heroicons/vue/24/outline';
-import { useAuthStore } from '../stores/auth';
-import OrgSwitcher from './OrgSwitcher.vue';
+  import { MoonIcon, SunIcon } from '@heroicons/vue/24/outline';
+  import { useAuthStore } from '../stores/auth';
+  import OrgSwitcher from './OrgSwitcher.vue';
+  import BaseButton from './BaseButton.vue';
 
-const isDark = ref(false);
-const auth = useAuthStore();
+  const isDark = ref(false);
+  const auth = useAuthStore();
 
-onMounted(() => {
-  isDark.value = document.documentElement.classList.contains('dark');
-  if (auth.isAuthed && !auth.me) {
-    auth.fetchMe();
+  onMounted(() => {
+    const stored = localStorage.getItem('theme');
+    isDark.value = stored ? stored === 'dark' : document.documentElement.classList.contains('dark');
+    if (auth.isAuthed && !auth.me) {
+      auth.fetchMe();
+    }
+  });
+
+  function toggleDark() {
+    isDark.value = !isDark.value;
+    document.documentElement.classList.toggle('dark', isDark.value);
+    localStorage.setItem('theme', isDark.value ? 'dark' : 'light');
   }
-});
-
-function toggleDark() {
-  isDark.value = !isDark.value;
-  document.documentElement.classList.toggle('dark', isDark.value);
-}
 </script>

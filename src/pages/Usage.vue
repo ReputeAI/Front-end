@@ -3,13 +3,13 @@
     <Sidebar />
     <div class="flex-1 p-6 max-w-6xl mx-auto">
       <h1 class="text-2xl font-bold mb-4">Usage</h1>
-      <div class="bg-white dark:bg-gray-800 p-6 rounded shadow">
-        <div v-if="loading">Loading...</div>
-        <div v-else-if="error" class="text-red-600">{{ error.message || error }}</div>
-        <div v-else>
-          <p class="mb-4">Current Plan: <strong>{{ plan }}</strong></p>
-          <table class="min-w-full text-left">
-            <thead>
+        <div class="bg-white dark:bg-gray-800 p-6 rounded shadow">
+          <TableSkeleton v-if="loading" :cols="4" :rows="3" />
+          <div v-else-if="error" class="text-red-600">{{ error.message || error }}</div>
+          <div v-else>
+            <p class="mb-4">Current Plan: <strong>{{ plan }}</strong></p>
+            <table class="min-w-full text-left">
+              <thead>
               <tr>
                 <th class="p-2">Month</th>
                 <th class="p-2">Reviews fetched</th>
@@ -36,6 +36,7 @@
 import { ref, onMounted } from 'vue';
 import Sidebar from '../components/Sidebar.vue';
 import { api } from '../lib/api';
+import TableSkeleton from '../components/TableSkeleton.vue';
 
 const loading = ref(false);
 const error = ref(null);

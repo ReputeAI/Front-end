@@ -4,23 +4,25 @@
     <div class="flex-1 p-6 max-w-6xl mx-auto">
       <h1 class="text-2xl font-bold mb-4">Replies</h1>
 
-      <div class="mb-4 flex items-center gap-2">
-        <input
-          v-model="reviewId"
-          type="text"
-          placeholder="Filter by review ID"
-          class="border p-1 rounded"
-        />
-        <button @click="fetchReplies" class="bg-primary text-white px-3 py-1 rounded">
-          Refresh
-        </button>
-      </div>
+        <div class="mb-4 flex items-center gap-2">
+          <input
+            v-model="reviewId"
+            type="text"
+            placeholder="Filter by review ID"
+            class="border p-1 rounded"
+          />
+          <BaseButton @click="fetchReplies" :loading="loading">
+            Refresh
+          </BaseButton>
+        </div>
 
-      <div v-if="loading">Loading...</div>
-      <div v-else-if="error" class="text-red-600">{{ error }}</div>
-      <div v-else>
-        <table class="min-w-full bg-white dark:bg-gray-800 rounded shadow">
-          <thead>
+        <div v-if="loading" class="bg-white dark:bg-gray-800 p-4 rounded shadow">
+          <TableSkeleton :cols="5" :rows="5" />
+        </div>
+        <div v-else-if="error" class="text-red-600">{{ error }}</div>
+        <div v-else>
+          <table class="min-w-full bg-white dark:bg-gray-800 rounded shadow">
+            <thead>
             <tr class="text-left">
               <th class="p-2">Review ID</th>
               <th class="p-2">Text</th>
@@ -49,6 +51,8 @@ import Sidebar from '../components/Sidebar.vue';
 import { ref, onMounted } from 'vue';
 import { api } from '../lib/api';
 import { useAuthStore } from '../stores/auth';
+import BaseButton from '../components/BaseButton.vue';
+import TableSkeleton from '../components/TableSkeleton.vue';
 
 const auth = useAuthStore();
 const reviewId = ref('');
