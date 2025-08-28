@@ -57,6 +57,15 @@ export function createAxios(): AxiosInstance {
         }
       }
 
+      if (response?.status === 402 && response.data?.reason === 'limit_exceeded') {
+        const url = config?.url || '';
+        if (url.includes('/ai') || url.includes('/refresh')) {
+          const { useUsageStore } = await import('../stores/usage');
+          const usage = useUsageStore();
+          usage.triggerLimitExceeded();
+        }
+      }
+
       return Promise.reject(error);
     }
   );

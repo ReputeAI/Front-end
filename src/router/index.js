@@ -5,6 +5,7 @@ import Reviews from '../pages/Reviews.vue';
 import Replies from '../pages/Replies.vue';
 import Settings from '../pages/Settings.vue';
 import Billing from '../pages/Billing.vue';
+import Usage from '../pages/Usage.vue';
 import Login from '../pages/Login.vue';
 import Signup from '../pages/Signup.vue';
 import Integrations from '../pages/Integrations.vue';
@@ -20,7 +21,8 @@ const routes = [
   { path: '/integrations', component: Integrations },
   { path: '/integrations/callback', component: IntegrationCallback },
   { path: '/settings', component: Settings },
-  { path: '/billing', component: Billing }
+  { path: '/billing', component: Billing },
+  { path: '/usage', component: Usage }
 ];
 
 export default createRouter({
