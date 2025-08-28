@@ -21,61 +21,52 @@
           <input v-model="language" class="border p-1 rounded w-full" />
         </label>
 
-        <button
-          @click="fetchSuggestions"
-          class="bg-primary text-white px-3 py-1 rounded"
-          :disabled="loading"
-        >
-          {{ loading ? 'Loading...' : 'Suggest' }}
-        </button>
+          <BaseButton @click="fetchSuggestions" :loading="loading">Suggest</BaseButton>
         <div v-if="error" class="text-red-600">{{ error }}</div>
       </div>
 
-      <div v-for="s in suggestions" :key="s" class="border p-2 rounded mb-2">
-        <p>{{ s }}</p>
-        <div class="flex gap-2 mt-2">
-          <button @click="copy(s)" class="px-2 py-1 border rounded">Copy</button>
-          <button
-            @click="useSuggestion(s)"
-            class="px-2 py-1 bg-primary text-white rounded"
-          >
-            Use this
-          </button>
+        <div v-for="s in suggestions" :key="s" class="border p-2 rounded mb-2">
+          <p>{{ s }}</p>
+          <div class="flex gap-2 mt-2">
+            <BaseButton variant="secondary" class="px-2 py-1" @click="copy(s)">Copy</BaseButton>
+            <BaseButton class="px-2 py-1" @click="useSuggestion(s)">Use this</BaseButton>
+          </div>
         </div>
-      </div>
 
       <div class="mt-4 space-y-2">
-        <textarea
-          v-model="replyText"
-          rows="4"
-          class="border p-2 rounded w-full"
-          placeholder="Type your reply here"
-        ></textarea>
-        <div class="flex gap-2">
-          <button
-            @click="saveDraft"
-            class="px-3 py-1 bg-gray-200 rounded"
-            :disabled="saving"
-          >
-            {{ saving ? 'Saving...' : 'Save as draft' }}
-          </button>
-          <button
-            @click="sendReply"
-            class="px-3 py-1 bg-primary text-white rounded"
-            :disabled="sending"
-          >
-            {{ sending ? 'Sending...' : 'Send to platform' }}
-          </button>
+          <textarea
+            v-model="replyText"
+            rows="4"
+            class="border p-2 rounded w-full dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
+            placeholder="Type your reply here"
+          ></textarea>
+          <div class="flex gap-2">
+            <BaseButton
+              variant="secondary"
+              class="px-3 py-1"
+              :loading="saving"
+              @click="saveDraft"
+            >
+              Save as draft
+            </BaseButton>
+            <BaseButton
+              class="px-3 py-1"
+              :loading="sending"
+              @click="sendReply"
+            >
+              Send to platform
+            </BaseButton>
+          </div>
         </div>
-      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import { api } from '../lib/api';
-import { useAuthStore } from '../stores/auth';
+  import { ref } from 'vue';
+  import { api } from '../lib/api';
+  import { useAuthStore } from '../stores/auth';
+  import BaseButton from './BaseButton.vue';
 
 const props = defineProps({
   review: { type: Object, required: true }

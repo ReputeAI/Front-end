@@ -38,23 +38,26 @@
 
           <input v-model="filters.date_from" type="date" class="border p-1 rounded" />
 
-          <button
-            @click="refresh"
-            class="ml-auto bg-primary text-white px-3 py-1 rounded"
-          >
-            Refresh reviews
-          </button>
+            <BaseButton
+              @click="refresh"
+              class="ml-auto"
+              :loading="refreshLoading"
+            >
+              Refresh reviews
+            </BaseButton>
+          </div>
         </div>
-      </div>
 
-      <div v-if="loading">Loading...</div>
-      <div v-else-if="error" class="text-red-600">{{ error.message || error }}</div>
-      <div v-else>
-        <table class="min-w-full bg-white dark:bg-gray-800 rounded shadow">
-          <thead>
-            <tr class="text-left">
-              <th class="p-2">Platform</th>
-              <th class="p-2">Rating</th>
+        <div v-if="loading" class="bg-white dark:bg-gray-800 p-4 rounded shadow">
+          <TableSkeleton :cols="6" :rows="10" />
+        </div>
+        <div v-else-if="error" class="text-red-600">{{ error.message || error }}</div>
+        <div v-else>
+          <table class="min-w-full bg-white dark:bg-gray-800 rounded shadow">
+            <thead>
+              <tr class="text-left">
+                <th class="p-2">Platform</th>
+                <th class="p-2">Rating</th>
               <th class="p-2">Text</th>
               <th class="p-2">Date</th>
               <th class="p-2">Sentiment</th>
@@ -79,33 +82,53 @@
               </td>
               <td class="p-2">
                 <div class="flex gap-2">
-                  <button class="text-primary">View</button>
-                  <button class="text-primary" @click="analyze(r)">Analyze</button>
-                  <button class="text-primary" @click="openSuggestReply(r)">Suggest reply</button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                    <BaseButton
+                      variant="secondary"
+                      class="text-sm px-2 py-1"
+                    >
+                      View
+                    </BaseButton>
+                    <BaseButton
+                      variant="secondary"
+                      class="text-sm px-2 py-1"
+                      :loading="analysisLoading && analysisReview?.id === r.id"
+                      @click="analyze(r)"
+                    >
+                      Analyze
+                    </BaseButton>
+                    <BaseButton
+                      variant="secondary"
+                      class="text-sm px-2 py-1"
+                      @click="openSuggestReply(r)"
+                    >
+                      Suggest reply
+                    </BaseButton>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
 
         <div class="flex items-center justify-between mt-4">
-          <div class="space-x-2">
-            <button
-              @click="pagination.page--"
-              :disabled="pagination.page === 1"
-              class="px-3 py-1 border rounded disabled:opacity-50"
-            >
-              Prev
-            </button>
-            <span>Page {{ pagination.page }}</span>
-            <button
-              @click="pagination.page++"
-              :disabled="items.length < pagination.size"
-              class="px-3 py-1 border rounded disabled:opacity-50"
-            >
-              Next
-            </button>
-          </div>
+            <div class="space-x-2">
+              <BaseButton
+                variant="secondary"
+                class="px-3 py-1"
+                :disabled="pagination.page === 1"
+                @click="pagination.page--"
+              >
+                Prev
+              </BaseButton>
+              <span>Page {{ pagination.page }}</span>
+              <BaseButton
+                variant="secondary"
+                class="px-3 py-1"
+                :disabled="items.length < pagination.size"
+                @click="pagination.page++"
+              >
+                Next
+              </BaseButton>
+            </div>
           <div class="flex items-center">
             <label class="mr-2">Rows:</label>
             <select v-model.number="pagination.size" class="border p-1 rounded">
@@ -156,6 +179,8 @@ import SuggestReplyModal from '../components/SuggestReplyModal.vue';
 import { ref, reactive, onMounted, watch, computed } from 'vue';
 import { api } from '../lib/api';
 import { useAuthStore } from '../stores/auth';
+import BaseButton from '../components/BaseButton.vue';
+import TableSkeleton from '../components/TableSkeleton.vue';
 
 const auth = useAuthStore();
 
@@ -178,6 +203,7 @@ const analysisError = ref(null);
 
 const selectedReview = ref(null);
 const showSuggestModal = ref(false);
+const refreshLoading = ref(false);
 
 const pagination = reactive({
   page: 1,
@@ -269,12 +295,15 @@ function sentimentClass(s) {
 
 async function refresh() {
   if (!auth.orgId) return;
+  refreshLoading.value = true;
   try {
     await api.post(`/orgs/${auth.orgId}/reviews/refresh`);
     alert('Refresh gestart');
     fetchReviews();
   } catch (e) {
     console.error(e);
+  } finally {
+    refreshLoading.value = false;
   }
 }
 </script>
