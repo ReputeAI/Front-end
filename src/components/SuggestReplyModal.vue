@@ -43,6 +43,31 @@
           </button>
         </div>
       </div>
+
+      <div class="mt-4 space-y-2">
+        <textarea
+          v-model="replyText"
+          rows="4"
+          class="border p-2 rounded w-full"
+          placeholder="Type your reply here"
+        ></textarea>
+        <div class="flex gap-2">
+          <button
+            @click="saveDraft"
+            class="px-3 py-1 bg-gray-200 rounded"
+            :disabled="saving"
+          >
+            {{ saving ? 'Saving...' : 'Save as draft' }}
+          </button>
+          <button
+            @click="sendReply"
+            class="px-3 py-1 bg-primary text-white rounded"
+            :disabled="sending"
+          >
+            {{ sending ? 'Sending...' : 'Send to platform' }}
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -50,18 +75,23 @@
 <script setup>
 import { ref } from 'vue';
 import { api } from '../lib/api';
+import { useAuthStore } from '../stores/auth';
 
 const props = defineProps({
   review: { type: Object, required: true }
 });
 
-const emit = defineEmits(['close', 'select']);
+const emit = defineEmits(['close']);
 
 const tone = ref('friendly');
 const language = ref('');
 const suggestions = ref([]);
 const loading = ref(false);
 const error = ref('');
+const replyText = ref('');
+const saving = ref(false);
+const sending = ref(false);
+const auth = useAuthStore();
 
 async function fetchSuggestions() {
   loading.value = true;
@@ -86,8 +116,42 @@ function copy(text) {
 }
 
 function useSuggestion(text) {
-  emit('select', text);
-  emit('close');
+  replyText.value = text;
+}
+
+async function saveDraft() {
+  if (!auth.orgId) return;
+  saving.value = true;
+  try {
+    await api.post(`/orgs/${auth.orgId}/reviews/${props.review.id}/reply`, {
+      text: replyText.value,
+      is_auto: false
+    });
+    alert('Draft opgeslagen');
+    emit('close');
+  } catch (e) {
+    alert(e?.message || String(e));
+  } finally {
+    saving.value = false;
+  }
+}
+
+async function sendReply() {
+  if (!auth.orgId) return;
+  sending.value = true;
+  try {
+    const { data } = await api.post(
+      `/orgs/${auth.orgId}/reviews/${props.review.id}/send-reply`
+    );
+    if (data?.status) props.review.status = data.status;
+    if (data?.platform_status) props.review.platform_status = data.platform_status;
+    alert('Verzonden');
+    emit('close');
+  } catch (e) {
+    alert(e?.message || String(e));
+  } finally {
+    sending.value = false;
+  }
 }
 </script>
 
