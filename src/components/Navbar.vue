@@ -9,20 +9,10 @@
             <a href="#pricing" class="text-gray-700 hover:text-primary dark:text-gray-300">Pricing</a>
             <template v-if="auth.isAuthed">
               <span class="text-gray-700 dark:text-gray-300">{{ auth.me?.email }}</span>
-              <select
+              <OrgSwitcher
                 v-if="auth.me?.memberships?.length"
-                :value="auth.orgId"
-                @change="auth.setOrg(Number($event.target.value))"
-                class="border border-gray-300 rounded p-1 dark:bg-gray-800 dark:border-gray-700"
-              >
-                <option
-                  v-for="m in auth.me.memberships"
-                  :key="m.org_id"
-                  :value="m.org_id"
-                >
-                  Org {{ m.org_id }}
-                </option>
-              </select>
+                :memberships="auth.me.memberships"
+              />
             </template>
             <template v-else>
               <router-link to="/login" class="text-gray-700 hover:text-primary dark:text-gray-300">Login</router-link>
@@ -43,6 +33,7 @@
 import { ref, onMounted } from 'vue';
 import { MoonIcon, SunIcon } from '@heroicons/vue/24/outline';
 import { useAuthStore } from '../stores/auth';
+import OrgSwitcher from './OrgSwitcher.vue';
 
 const isDark = ref(false);
 const auth = useAuthStore();

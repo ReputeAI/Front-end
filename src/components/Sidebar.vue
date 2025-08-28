@@ -1,5 +1,8 @@
 <template>
   <div class="bg-white dark:bg-gray-800 w-64 min-h-screen shadow-md hidden md:block">
+    <div v-if="auth.isAuthed && auth.me?.memberships?.length" class="p-4">
+      <OrgSwitcher :memberships="auth.me.memberships" />
+    </div>
     <nav class="mt-8 space-y-1">
       <router-link
         v-for="item in items"
@@ -15,6 +18,10 @@
 </template>
 
 <script setup>
+import OrgSwitcher from './OrgSwitcher.vue';
+import { useAuthStore } from '../stores/auth';
+
+const auth = useAuthStore();
 const items = [
   { to: '/dashboard', label: 'Dashboard' },
   { to: '/reviews', label: 'Reviews' },
