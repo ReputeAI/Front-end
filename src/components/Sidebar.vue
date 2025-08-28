@@ -25,6 +25,7 @@ const auth = useAuthStore();
 const items = [
   { to: '/dashboard', label: 'Dashboard' },
   { to: '/reviews', label: 'Reviews' },
+  { to: '/replies', label: 'Replies' },
   { to: '/integrations', label: 'Integrations' },
   { to: '/settings', label: 'Settings' },
   { to: '/billing', label: 'Billing' }

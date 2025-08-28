@@ -147,7 +147,6 @@
     v-if="showSuggestModal"
     :review="selectedReview"
     @close="showSuggestModal = false"
-    @select="applySuggestion"
   />
 </template>
 
@@ -214,10 +213,6 @@ function closeAnalysis() {
 function openSuggestReply(review) {
   selectedReview.value = review;
   showSuggestModal.value = true;
-}
-
-function applySuggestion(text) {
-  console.log('Selected suggestion:', text);
 }
 
 async function fetchReviews() {
