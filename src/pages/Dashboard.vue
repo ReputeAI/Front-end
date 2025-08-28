@@ -24,10 +24,18 @@ import Sidebar from '../components/Sidebar.vue';
 import Chart from '../components/Chart.vue';
 import ReviewCard from '../components/ReviewCard.vue';
 import { useReviewsStore } from '../stores/reviews';
-import { computed } from 'vue';
+import { computed, onMounted } from 'vue';
+import { useAuthStore } from '../stores/auth';
 
 const reviewStore = useReviewsStore();
 const reviews = reviewStore.reviews;
+
+const auth = useAuthStore();
+onMounted(() => {
+  if (!auth.me) {
+    auth.fetchMe();
+  }
+});
 
 const totalReviews = computed(() => reviews.length);
 
