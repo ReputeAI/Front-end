@@ -78,7 +78,11 @@
                 </span>
               </td>
               <td class="p-2">
-                <button class="text-primary">View</button>
+                <div class="flex gap-2">
+                  <button class="text-primary">View</button>
+                  <button class="text-primary" @click="analyze(r)">Analyze</button>
+                  <button class="text-primary" @click="openSuggestReply(r)">Suggest reply</button>
+                </div>
               </td>
             </tr>
           </tbody>
@@ -114,10 +118,42 @@
       </div>
     </div>
   </div>
+
+  <div
+    v-if="analysisReview"
+    class="fixed inset-y-0 right-0 w-80 bg-white dark:bg-gray-800 shadow-lg p-4 overflow-y-auto"
+  >
+    <div class="flex justify-between items-center mb-2">
+      <h2 class="text-lg font-semibold">Analysis</h2>
+      <button @click="closeAnalysis" class="text-gray-600">✕</button>
+    </div>
+    <div v-if="analysisLoading">Loading...</div>
+    <div v-else-if="analysisError" class="text-red-600">{{ analysisError }}</div>
+    <div v-else-if="analysis">
+      <p><strong>Label:</strong> {{ analysis.label }}</p>
+      <p><strong>Confidence:</strong> {{ analysis.confidence }}</p>
+      <div v-if="analysis.aspects?.length">
+        <strong>Aspects:</strong>
+        <ul class="list-disc ml-4">
+          <li v-for="(a, i) in analysis.aspects" :key="i">
+            {{ a.aspect }} - {{ a.sentiment }} ({{ a.confidence }})
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <SuggestReplyModal
+    v-if="showSuggestModal"
+    :review="selectedReview"
+    @close="showSuggestModal = false"
+    @select="applySuggestion"
+  />
 </template>
 
 <script setup>
 import Sidebar from '../components/Sidebar.vue';
+import SuggestReplyModal from '../components/SuggestReplyModal.vue';
 import { ref, reactive, onMounted, watch, computed } from 'vue';
 import { api } from '../lib/api';
 import { useAuthStore } from '../stores/auth';
@@ -136,6 +172,14 @@ const loading = ref(false);
 const error = ref(null);
 const items = ref([]);
 
+const analysisReview = ref(null);
+const analysis = ref(null);
+const analysisLoading = ref(false);
+const analysisError = ref(null);
+
+const selectedReview = ref(null);
+const showSuggestModal = ref(false);
+
 const pagination = reactive({
   page: 1,
   size: 50,
@@ -146,6 +190,35 @@ const platformOptions = computed(() => {
   const set = new Set(items.value.map(r => r.platform));
   return Array.from(set);
 });
+
+async function analyze(review) {
+  analysisReview.value = review;
+  analysisLoading.value = true;
+  analysisError.value = null;
+  analysis.value = null;
+  try {
+    const { data } = await api.post('/ai/sentiment', { text: review.text });
+    analysis.value = data;
+  } catch (e) {
+    analysisError.value = e?.message || String(e);
+  } finally {
+    analysisLoading.value = false;
+  }
+}
+
+function closeAnalysis() {
+  analysisReview.value = null;
+  analysis.value = null;
+}
+
+function openSuggestReply(review) {
+  selectedReview.value = review;
+  showSuggestModal.value = true;
+}
+
+function applySuggestion(text) {
+  console.log('Selected suggestion:', text);
+}
 
 async function fetchReviews() {
   if (!auth.orgId) return;
